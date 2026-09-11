@@ -31,8 +31,16 @@ export function CopilotChat() {
     let shouldReconnect = true;
 
     function connect() {
-      const proto = location.protocol === "https:" ? "wss" : "ws";
-      const wsUrl = `${proto}://${location.hostname}:8080/ws`;
+      const rawBackend = import.meta.env.VITE_BACKEND_URL;
+      let wsUrl = "";
+      if (rawBackend) {
+        const wsProto = rawBackend.startsWith("https") ? "wss" : "ws";
+        const cleanHost = rawBackend.replace(/^https?:\/\//, "").replace(/\/$/, "");
+        wsUrl = `${wsProto}://${cleanHost}/ws`;
+      } else {
+        const proto = location.protocol === "https:" ? "wss" : "ws";
+        wsUrl = `${proto}://${location.hostname}:8080/ws`;
+      }
       
       try {
         const ws = new WebSocket(wsUrl);

@@ -39,7 +39,8 @@ export function ContactModal({ open, onClose }: { open: boolean; onClose: () => 
     const fullMessage = `Service: ${service}\n\nProject details:\n${message}`;
 
     try {
-      const response = await fetch("http://localhost:8080/api/enquiries", {
+      const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:8080").replace(/\/$/, "");
+      const response = await fetch(`${backendUrl}/api/enquiries`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

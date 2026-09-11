@@ -70,12 +70,16 @@ ${firmContext}
 const app = express();
 
 // Configure CORS and JSON parsing for the Lead API
-app.use(cors({ origin: ['http://localhost:5173', 'http://127.0.0.1:5173'] }));
+const allowedOrigins = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173']
+  : '*';
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 async function getAiScore({ name, email, phone, message, source }) {
   try {
-    const response = await fetch('http://127.0.0.1:8000/score-lead', {
+    const aiEngineUrl = (process.env.AI_ENGINE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+    const response = await fetch(`${aiEngineUrl}/score-lead`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
