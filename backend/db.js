@@ -15,14 +15,22 @@ db.exec(`
     conversation TEXT,
     source TEXT,
     status TEXT DEFAULT 'New',
+    ai_score INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
 
-function saveEnquiry({ name, email, phone, message, conversation, source }) {
+try {
+  // If the table already existed from before, add the column gracefully
+  db.exec("ALTER TABLE enquiries ADD COLUMN ai_score INTEGER DEFAULT 0;");
+} catch(e) {
+  // Column likely already exists
+}
+
+function saveEnquiry({ name, email, phone, message, conversation, source, ai_score }) {
   const stmt = db.prepare(`
-    INSERT INTO enquiries (name, email, phone, message, conversation, source)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO enquiries (name, email, phone, message, conversation, source, ai_score)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
   const result = stmt.run(
     name || '', 
@@ -30,7 +38,8 @@ function saveEnquiry({ name, email, phone, message, conversation, source }) {
     phone || '', 
     message || '', 
     conversation || '', 
-    source || 'chatbot'
+    source || 'chatbot',
+    ai_score || 0
   );
   return result.lastInsertRowid;
 }

@@ -1,68 +1,105 @@
 # Sharada Production & Media Mgmt.
 
-The repository is structured as a monorepo with separate `client` and `server` environments.
+A modern creative media, marketing, and technology platform featuring an AI Copilot chatbot, enquiry management, and an intelligent lead scoring engine.
 
-## Project Structure
+## Clean Project Structure
 
-- `/client`: Frontend built with React, Vite, and Tailwind CSS.
-- `/server`: Node.js + Express backend that handles WebSocket streaming for the Gemini AI Copilot.
+```
+sharada-website-main/
+├── frontend/               # React + Vite + Tailwind CSS web application
+│   ├── src/
+│   │   ├── app/           # Pages, components, hooks, and site content
+│   │   ├── styles/        # Theme and CSS styles
+│   │   └── imports/       # Images and brand assets
+│   ├── package.json
+│   └── vite.config.ts
+├── backend/                # Node.js + Express + WebSocket backend
+│   ├── index.js           # Server entry point & Gemini Copilot proxy
+│   ├── db.js              # SQLite database (enquiries table)
+│   ├── email.js           # Nodemailer notification service
+│   ├── test-client.js     # WebSocket test script
+│   ├── package.json
+│   └── .env.example
+├── ai-engine/              # Python FastAPI microservice for AI/ML
+│   ├── main.py            # Lead scoring inference API (POST /score-lead)
+│   ├── train.py           # Model training script
+│   ├── model.pkl          # Trained Random Forest pipeline
+│   └── requirements.txt   # Python dependencies
+├── .gitignore             # Comprehensive Git ignore for Node, Python, SQLite
+├── README.md              # Project documentation
+└── pnpm-workspace.yaml    # Workspace package manager config
+```
+
+---
 
 ## Prerequisites
 
-- **Node.js** (v18 or higher recommended)
-- **npm** or **pnpm** (Workspace is configured for pnpm, but npm works as well)
-- **Gemini API Key**: You need an active API key from Google AI Studio.
+- **Node.js**: v18+ (tested on Node 18 & 20)
+- **Python**: 3.10+ (for `ai-engine`)
+- **npm** or **pnpm**
+- **Google Gemini API Key** (from Google AI Studio)
 
-## Setup & Installation
+---
 
-### 1. Clone the repository
+## Quick Setup & Installation
+
+### 1. Backend (`backend/`)
 ```bash
-git clone <repository-url>
-cd <project-folder>
+cd backend
+npm install
+cp .env.example .env
+# Edit .env and configure GEMINI_API_KEY, PORT=8080, and optional email settings
 ```
 
-### 2. Setup the Backend (Server)
-
-Navigate to the `server` directory and install dependencies:
+### 2. Frontend (`frontend/`)
 ```bash
-cd server
+cd frontend
 npm install
 ```
 
-Create an environment file:
-1. In the `server` directory, create a new file named `.env`.
-2. Add your Gemini API Key:
-   ```env
-   GEMINI_API_KEY=your_actual_api_key_here
-   PORT=8080
-   ```
-
-### 3. Setup the Frontend (Client)
-
-Open a new terminal tab, navigate to the `client` directory, and install dependencies:
+### 3. AI Engine (`ai-engine/`)
 ```bash
-cd client
-npm install
+cd ai-engine
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 train.py
 ```
+
+---
 
 ## Running the Application
 
-To run the application locally, you need to start both the server and the client simultaneously.
+To run the complete ecosystem locally, start the three services in separate terminal windows:
 
-### Start the Backend
-In your first terminal, from the `server` directory:
+### Terminal 1 — Backend API & Copilot WebSocket
 ```bash
+cd backend
 npm start
+# Runs on http://localhost:8080 (WebSocket at ws://localhost:8080/ws)
 ```
-The server will start listening for WebSocket connections on `ws://localhost:8080/ws`.
 
-### Start the Frontend
-In your second terminal, from the `client` directory:
+### Terminal 2 — Frontend Application
 ```bash
+cd frontend
 npm run dev
+# Opens on http://localhost:5173
 ```
-This will launch the Vite development server. Open the provided `http://localhost:5173` link in your browser to view the website.
 
-## Chatbot (Sharada Copilot)
-The website features an AI Copilot in the bottom right corner.
-When you send a message, the React client connects to the Node.js backend via WebSockets. The backend securely uses your `GEMINI_API_KEY` to stream responses using the `@google/generative-ai` SDK (`gemini-2.5-flash` model), sending real-time chunks back to the UI.
+### Terminal 3 — AI Lead Scoring Microservice
+```bash
+cd ai-engine
+source .venv/bin/activate
+uvicorn main:app --reload --port 8000
+# Runs on http://localhost:8000
+```
+
+---
+
+## Features
+
+- **AI Copilot (Gemini 2.5 Flash)**: Real-time streamed interactive chatbot providing information about Sharada's services.
+- **Automated Lead Collection**: Collects visitor enquiries through both the interactive Copilot chat and the Contact Form.
+- **Intelligent Lead Scoring (AI/ML)**: Automatically calculates a 1–100 probability score for each enquiry based on intent, project scope, and urgency.
+- **Email Notifications**: Instant alert emails dispatched to the team upon new enquiries.
+- **Local Storage**: Reliable SQLite storage in `enquiries.db` with status tracking.

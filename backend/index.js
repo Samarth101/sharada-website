@@ -48,7 +48,7 @@ if (!isKeyConfigured) {
 }
 
 // Read firm context so the AI knows about Sharada
-const contextPath = path.join(__dirname, '../client/src/app/data/siteContent.ts');
+const contextPath = path.join(__dirname, '../frontend/src/app/data/siteContent.ts');
 let firmContext = "";
 try {
   firmContext = fs.readFileSync(contextPath, 'utf8');
@@ -73,6 +73,23 @@ const app = express();
 app.use(cors({ origin: ['http://localhost:5173', 'http://127.0.0.1:5173'] }));
 app.use(express.json());
 
+async function getAiScore(message, source) {
+  try {
+    const response = await fetch('http://127.0.0.1:8000/score-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, source })
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return data.ai_score;
+    }
+  } catch (e) {
+    console.warn("AI Engine not reachable, defaulting score to 0.");
+  }
+  return 0;
+}
+
 // --- Lead API Endpoint ---
 app.post('/api/enquiries', async (req, res) => {
   const { name, email, phone, message, source } = req.body;
@@ -82,19 +99,22 @@ app.post('/api/enquiries', async (req, res) => {
   }
 
   try {
+    const ai_score = await getAiScore(message, source || 'contact_form');
+
     const enquiry = {
       name,
       email,
       phone,
       message,
       source: source || 'contact_form',
-      conversation: null
+      conversation: null,
+      ai_score
     };
 
     saveEnquiry(enquiry);
     await sendEnquiryEmail(enquiry);
     
-    return res.json({ success: true, message: 'Enquiry saved successfully.' });
+    return res.json({ success: true, message: 'Enquiry saved successfully.', ai_score });
   } catch (err) {
     console.error('Failed to save enquiry:', err);
     return res.status(500).json({ success: false, error: 'Internal server error' });
@@ -178,13 +198,16 @@ wss.on('connection', (ws) => {
                    conversationText = JSON.stringify(hist.map(m => ({role: m.role, text: m.parts[0]?.text || ''})));
                 } catch(e) {}
                 
+                const ai_score = await getAiScore(args.message, 'chatbot');
+                
                 const enquiry = {
                   name: args.name,
                   email: args.email,
                   phone: args.phone,
                   message: args.message,
                   source: 'chatbot',
-                  conversation: conversationText
+                  conversation: conversationText,
+                  ai_score
                 };
                 
                 saveEnquiry(enquiry);
