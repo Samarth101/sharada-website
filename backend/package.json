@@ -4,7 +4,8 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "view-leads": "node view-leads.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

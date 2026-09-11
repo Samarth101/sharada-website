@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { saveEnquiry } = require('./db');
+const { saveEnquiry, getAllEnquiries } = require('./db');
 const { sendEnquiryEmail } = require('./email');
 
 const { GEMINI_API_KEY, PORT } = process.env;
@@ -118,6 +118,17 @@ app.post('/api/enquiries', async (req, res) => {
   } catch (err) {
     console.error('Failed to save enquiry:', err);
     return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// --- Get All Enquiries Endpoint ---
+app.get('/api/enquiries', (req, res) => {
+  try {
+    const enquiries = getAllEnquiries();
+    return res.json({ success: true, count: enquiries.length, enquiries });
+  } catch (err) {
+    console.error('Failed to fetch enquiries:', err);
+    return res.status(500).json({ success: false, error: 'Failed to fetch enquiries' });
   }
 });
 

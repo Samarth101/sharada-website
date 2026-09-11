@@ -24,6 +24,17 @@ def load_model():
     else:
         print("WARNING: model.pkl not found. Please run train.py first.")
 
+@app.get("/")
+def read_root():
+    return {
+        "status": "online",
+        "service": "Sharada AI Lead Scoring Engine",
+        "endpoints": {
+            "docs": "/docs",
+            "score_lead": "POST /score-lead"
+        }
+    }
+
 @app.post("/score-lead")
 def score_lead(lead: Lead):
     global model

@@ -44,7 +44,13 @@ function saveEnquiry({ name, email, phone, message, conversation, source, ai_sco
   return result.lastInsertRowid;
 }
 
+function getAllEnquiries() {
+  const stmt = db.prepare(`SELECT * FROM enquiries ORDER BY created_at DESC`);
+  return stmt.all();
+}
+
 module.exports = {
   db,
-  saveEnquiry
+  saveEnquiry,
+  getAllEnquiries
 };
