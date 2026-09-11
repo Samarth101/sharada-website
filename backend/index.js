@@ -1,9 +1,9 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const fs = require('fs');
-const path = require('path');
 const cors = require('cors');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { saveEnquiry, getAllEnquiries } = require('./db');
@@ -73,12 +73,18 @@ const app = express();
 app.use(cors({ origin: ['http://localhost:5173', 'http://127.0.0.1:5173'] }));
 app.use(express.json());
 
-async function getAiScore(message, source) {
+async function getAiScore({ name, email, phone, message, source }) {
   try {
     const response = await fetch('http://127.0.0.1:8000/score-lead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, source })
+      body: JSON.stringify({
+        message,
+        source: source || 'contact_form',
+        name: name || '',
+        email: email || '',
+        phone: phone || ''
+      })
     });
     if (response.ok) {
       const data = await response.json();
@@ -99,7 +105,7 @@ app.post('/api/enquiries', async (req, res) => {
   }
 
   try {
-    const ai_score = await getAiScore(message, source || 'contact_form');
+    const ai_score = await getAiScore({ name, email, phone, message, source });
 
     const enquiry = {
       name,
@@ -209,7 +215,13 @@ wss.on('connection', (ws) => {
                    conversationText = JSON.stringify(hist.map(m => ({role: m.role, text: m.parts[0]?.text || ''})));
                 } catch(e) {}
                 
-                const ai_score = await getAiScore(args.message, 'chatbot');
+                const ai_score = await getAiScore({
+                  name: args.name,
+                  email: args.email,
+                  phone: args.phone,
+                  message: args.message,
+                  source: 'chatbot'
+                });
                 
                 const enquiry = {
                   name: args.name,
